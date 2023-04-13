@@ -22,14 +22,14 @@ enum hrtimer_restart timer_callback( struct hrtimer *timer_for_restart )
 	pte = *ppte;
 	If pte exists {
 		If pte is present {
-			rss ++
+			RSS++
 			If pte is young {
-				wss++
+				WSS++
 				test_and_clear_bit(_PAGE_BIT_ACCESSED,(unsigned long *)ppte);
 			}
 		} 	
 		Else {
-			swap ++
+			SWAP++
 		}
 	}
 
