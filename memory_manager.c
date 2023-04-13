@@ -7,6 +7,7 @@
 
 unsigned long timer_interval_ns = 10e9; // 10-second timer
 static struct hrtimer hr_timer;
+int RSS, WSS, SWAP; //counters
 
 enum hrtimer_restart timer_callback( struct hrtimer *timer_for_restart )
 {
