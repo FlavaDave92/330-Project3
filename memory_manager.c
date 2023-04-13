@@ -23,7 +23,7 @@ enum hrtimer_restart timer_callback( struct hrtimer *timer_for_restart )
 	// Do the measurement, like looking into VMA and walking through memory pages
 	// pte_t *ppte, pte; ppte means 'pointer of PTE'
 	task_struct *task;
-	pte_t *ptep = search_pte_in_memory(task->mm, /*sth here*/); // missing mm_struct and address, don't know how to find them
+	pte_t *ptep = search_pte_in_memory(task->mm, task->address); // missing mm_struct and address, don't know how to find them
 	pte = *ppte;
 	If pte exists {
 		If pte is present {
