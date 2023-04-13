@@ -18,8 +18,23 @@ enum hrtimer_restart timer_callback( struct hrtimer *timer_for_restart )
   	hrtimer_forward(timer_for_restart, currtime , interval);
 
 	// Do the measurement, like looking into VMA and walking through memory pages
-// And also do the Kernel log printing aka printk per requirements
+	// pte_t *ppte, pte; ppte means 'pointer of PTE'
+	pte = *ppte;
+	If pte exists {
+		If pte is present {
+			rss ++
+			If pte is young {
+				wss++
+				test_and_clear_bit(_PAGE_BIT_ACCESSED,(unsigned long *)ppte);
+			}
+		} 	
+		Else {
+			swap ++
+		}
+	}
 
+// And also do the Kernel log printing aka printk per requirements
+	printk(KERN_INFO "PID [%s]: RSS=[%d] KB, SWAP=[%d] KB, WSS=[%d] KB", PID,RSS,SWAP,WSS);
 	return HRTIMER_RESTART;
 }
 
