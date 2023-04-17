@@ -104,7 +104,7 @@ struct void walk_pte_in_memory(const struct mm_struct *const mm, const unsigned 
 			RSS++;
 			if(pte_young(pte)){
 				WSS++;
-				test_and_clear_bit(_PAGE_BIT_ACCESSED,(unsigned long *)ppte);
+				test_and_clear_bit(address, ppte);
 			}
 		} 	
 		else {
