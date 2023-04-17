@@ -97,9 +97,9 @@ struct void walk_pte_in_memory(const struct mm_struct *const mm, const unsigned 
 
     pte_t *pte;
 
-    pte = ppte
+    pte = *ppte
 
-        if(pte){
+        if(!pte_none(pte)){
 		if(pte_present(pte)) {
 			RSS++;
 			if(pte_young(pte)){
