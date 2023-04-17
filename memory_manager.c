@@ -40,7 +40,7 @@ enum hrtimer_restart timer_callback( struct hrtimer *timer_for_restart )
 
     while(virtual_memory){
 
-    for(page = (unsigned long) virtual_memory->vm_start; page < virtual_memory->vm_end; page+=PAGE_SIZE){
+    for(page = (unsigned long) virtual_memory->vm_start; page < (unsigned long) virtual_memory->vm_end; page+=PAGE_SIZE){
 
         walk_pte_in_memory(task->mm, page);
 
