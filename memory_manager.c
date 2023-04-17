@@ -10,6 +10,12 @@ unsigned long timer_interval_ns = 10e9; // 10-second timer
 static struct hrtimer hr_timer;
 int RSS, WSS, SWAP, pid;
 module_param(pid, int, 0);
+unsigned long page;
+
+
+
+
+
 //int ptep_test_and_clear_young (struct vm_area_struct *vma, unsigned long addr, pte_t *ptep);
 
 enum hrtimer_restart timer_callback( struct hrtimer *timer_for_restart )
@@ -22,21 +28,25 @@ enum hrtimer_restart timer_callback( struct hrtimer *timer_for_restart )
 
 	// Do the measurement, like looking into VMA and walking through memory pages
 	// pte_t *ppte, pte; ppte means 'pointer of PTE'
-	task_struct *task;
-	pte_t *ptep = search_pte_in_memory(task->mm, task->address); // missing mm_struct and address, don't know how to find them
-	pte = *ppte;
-	If pte exists {
-		If pte is present {
-			RSS++
-			If pte is young {
-				WSS++
-				test_and_clear_bit(_PAGE_BIT_ACCESSED,(unsigned long *)ppte);
-			}
-		} 	
-		Else {
-			SWAP++
-		}
-	}
+
+
+
+	task_struct *task = get_pid_task(pid, PIDTYPE_PID);
+
+    virtual_memory = task->mm->mmap;
+
+    while(virtual_memory){
+
+    for(page = (unsigned long) virtual_memory->vm_start; page < virtual_memory->vm_end; page+=PAGE_SIZE){
+
+        walk_pte_in_memory(task->mm, page);
+
+    } 
+
+        virtual_memory = virtual_memory->vm_next;
+    }
+
+	
 
 	// And also do the Kernel log printing aka printk per requirements
 	printk(KERN_INFO "PID [%s]: RSS=[%d] KB, SWAP=[%d] KB, WSS=[%d] KB", PID,RSS,SWAP,WSS);
@@ -54,13 +64,13 @@ int ptep_test_and_clear_young (struct vm_area_struct *vma, unsigned long addr, p
 }
 */
 
-struct pte_t *search_pte_in_memory(const struct mm_struct *const mm, const unsigned long address)
+struct void walk_pte_in_memory(const struct mm_struct *const mm, const unsigned long address)
 {
 	pgd_t *pdg;
 	p4d_t *p4d;
 	pud_t *pud;
 	pmd_t *pmd;
-	pte_t *ptep;
+	pte_t *ppte;
 	
 	pgd = pgd_offset(mm, address);
 	if (pgd_none(*pgd) || pgd_bad(*pgd))
@@ -78,11 +88,28 @@ struct pte_t *search_pte_in_memory(const struct mm_struct *const mm, const unsig
 	if (pmd_none(*pmd) || pmd_bad(*pmd))
 		return NULL;
 	
-	ptep = pte_offset_map(pmd, address);
-	if (!ptep)
+	ppte = pte_offset_map(pmd, address);
+	if (!ppte)
 		return NULL;
+
+    pte_t *pte;
+
+    pte = ppte
+
+        If(pte){
+		If(pte_present(pte)) {
+			RSS++
+			If(pte_young(pte)){
+				WSS++
+				test_and_clear_bit(_PAGE_BIT_ACCESSED,(unsigned long *)ppte);
+			}
+		} 	
+		Else {
+			SWAP++
+		}
+	}    
 	
-	return ptep;
+	
 }
 
 static int __init timer_init(void) {
