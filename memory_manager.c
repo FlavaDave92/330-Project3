@@ -8,7 +8,10 @@
 
 unsigned long timer_interval_ns = 10e9; // 10-second timer
 static struct hrtimer hr_timer;
-int RSS, WSS, SWAP, pid;
+int pid;
+int WSS = 0;
+int RSS = 0;
+int SWAP = 0;
 module_param(pid, int, 0);
 unsigned long page;
 
@@ -96,16 +99,16 @@ struct void walk_pte_in_memory(const struct mm_struct *const mm, const unsigned 
 
     pte = ppte
 
-        If(pte){
-		If(pte_present(pte)) {
-			RSS++
-			If(pte_young(pte)){
-				WSS++
+        if(pte){
+		if(pte_present(pte)) {
+			RSS++;
+			if(pte_young(pte)){
+				WSS++;
 				test_and_clear_bit(_PAGE_BIT_ACCESSED,(unsigned long *)ppte);
 			}
 		} 	
-		Else {
-			SWAP++
+		else {
+			SWAP++;
 		}
 	}    
 	
