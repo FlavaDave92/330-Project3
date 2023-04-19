@@ -39,7 +39,7 @@ enum hrtimer_restart timer_callback( struct hrtimer *timer_for_restart )
 
 	task_struct *task = get_pid_task(pid, PIDTYPE_PID);
 
-    virtual_memory = task->mm->mmap;
+    vm_area_struct *virtual_memory = task->mm->mmap;
 
     while(virtual_memory){
 
