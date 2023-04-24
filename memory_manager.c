@@ -12,9 +12,9 @@
 unsigned long timer_interval_ns = 10e9; // 10-second timer
 static struct hrtimer hr_timer;
 int pid;
-int WSS = 0;
-int RSS = 0;
-int SWAP = 0;
+unsigned long WSS = 0;
+unsigned long RSS = 0;
+unsigned long SWAP = 0;
 module_param(pid, int, 0);
 unsigned long page;
 
@@ -56,7 +56,7 @@ void walk_pte_in_memory(const struct mm_struct *const mm, const unsigned long ad
 			RSS++;
 			if(pte_young(pte)){
 				WSS++;
-				test_and_clear_bit(address, (unsigned long *)ppte);
+				test_and_clear_bit(_PAGE_BIT_ACCESSED, (unsigned long *)ppte);
 			}
 		} 	
 		else {
@@ -91,11 +91,10 @@ enum hrtimer_restart timer_callback( struct hrtimer *timer_for_restart )
     				}
         			virtual_memory = virtual_memory->vm_next;
     			}
-
-			// And also do the Kernel log printing aka printk per requirements
-			printk(KERN_INFO "PID [%d]: RSS=[%d] KB, SWAP=[%d] KB, WSS=[%d] KB", pid,RSS,SWAP,WSS);
+	
 		}
-
+	// And also do the Kernel log printing aka printk per requirements
+	printk(KERN_INFO "PID [%d]: RSS=[%ld] KB, SWAP=[%ld] KB, WSS=[%ld] KB", pid,RSS,SWAP,WSS);
 	return HRTIMER_RESTART;
 }
 
