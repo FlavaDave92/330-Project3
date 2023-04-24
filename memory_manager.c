@@ -18,6 +18,8 @@ int SWAP = 0;
 module_param(pid, int, 0);
 unsigned long page;
 
+struct vm_area_struct *virtual_memory;
+
 
 void walk_pte_in_memory(const struct mm_struct *const mm, const unsigned long address)
 {
@@ -25,7 +27,7 @@ void walk_pte_in_memory(const struct mm_struct *const mm, const unsigned long ad
 	p4d_t *p4d;
 	pud_t *pud;
 	pmd_t *pmd;
-	pte_t *ppte;
+	pte_t *ppte, pte;
 	
 	pgd = pgd_offset(mm, address);
 	if (pgd_none(*pgd) || pgd_bad(*pgd))
@@ -47,8 +49,6 @@ void walk_pte_in_memory(const struct mm_struct *const mm, const unsigned long ad
 	if (!ppte)
 		return;
 
-    pte_t pte;
-
     pte = *ppte;
 
         if(!pte_none(pte)){
@@ -67,7 +67,6 @@ void walk_pte_in_memory(const struct mm_struct *const mm, const unsigned long ad
 	
 }
 
-
 enum hrtimer_restart timer_callback( struct hrtimer *timer_for_restart )
 {
 	// Resetting the timer, which also means… ?
@@ -77,27 +76,25 @@ enum hrtimer_restart timer_callback( struct hrtimer *timer_for_restart )
   	hrtimer_forward(timer_for_restart, currtime , interval);
 
 	// Do the measurement, like looking into VMA and walking through memory pages
-	// pte_t *ppte, pte; ppte means 'pointer of PTE'
 
+	//task = pid_task(find_vpid(pid), PIDTYPE_PID);
+	struct task_struct *task;
+	for_each_process(task)
+		if (task->pid == pid)
+		{
+			virtual_memory = task->mm->mmap;
+			while(virtual_memory){
 
+    				for(page = (unsigned long) virtual_memory->vm_start; page < (unsigned long) virtual_memory->vm_end; page+=PAGE_SIZE)
+    				{
+        				walk_pte_in_memory(task->mm, page);
+    				}
+        			virtual_memory = virtual_memory->vm_next;
+    			}
 
-	struct task_struct *task = get_pid_task(pid, PIDTYPE_PID);
-
-    	struct vm_area_struct *virtual_memory = task->mm->mmap;
-
-    	while(virtual_memory){
-
-    		for(page = (unsigned long) virtual_memory->vm_start; page < (unsigned long) virtual_memory->vm_end; page+=PAGE_SIZE)
-    		{
-        		walk_pte_in_memory(task->mm, page);
-    		}
-        	virtual_memory = virtual_memory->vm_next;
-    	}
-
-	
-
-	// And also do the Kernel log printing aka printk per requirements
-	printk(KERN_INFO "PID [%s]: RSS=[%d] KB, SWAP=[%d] KB, WSS=[%d] KB", pid,RSS,SWAP,WSS);
+			// And also do the Kernel log printing aka printk per requirements
+			printk(KERN_INFO "PID [%d]: RSS=[%d] KB, SWAP=[%d] KB, WSS=[%d] KB", pid,RSS,SWAP,WSS);
+		}
 
 	return HRTIMER_RESTART;
 }
