@@ -12,13 +12,13 @@
 unsigned long timer_interval_ns = 10e9; // 10-second timer
 static struct hrtimer hr_timer;
 int pid;
-unsigned long WSS = 0;
-unsigned long RSS = 0;
-unsigned long SWAP = 0;
+unsigned long WSS;
+unsigned long RSS;
+unsigned long SWAP;
 module_param(pid, int, 0);
-unsigned long page;
+// unsigned long page;
 
-struct vm_area_struct *virtual_memory;
+// struct vm_area_struct *virtual_memory;
 
 
 void walk_pte_in_memory(const struct mm_struct *const mm, const unsigned long address)
@@ -51,16 +51,16 @@ void walk_pte_in_memory(const struct mm_struct *const mm, const unsigned long ad
 
     pte = *ppte;
 
-        if(!pte_none(pte)){
+       if(ppte){
 		if(pte_present(pte)) {
-			RSS++;
+			RSS = RSS + 4;
 			if(pte_young(pte)){
-				WSS++;
+				WSS= WSS + 4;
 				test_and_clear_bit(_PAGE_BIT_ACCESSED, (unsigned long *)ppte);
 			}
 		} 	
 		else {
-			SWAP++;
+			SWAP = SWAP + 4;
 		}
 	}    
 	
@@ -70,6 +70,10 @@ void walk_pte_in_memory(const struct mm_struct *const mm, const unsigned long ad
 enum hrtimer_restart timer_callback( struct hrtimer *timer_for_restart )
 {
 	// Resetting the timer, which also means… ?
+	RSS = 0;
+	WSS = 0;
+	SWAP = 0;
+
   	ktime_t currtime , interval;
   	currtime  = ktime_get();
   	interval = ktime_set(0,timer_interval_ns); 
@@ -82,10 +86,12 @@ enum hrtimer_restart timer_callback( struct hrtimer *timer_for_restart )
 	for_each_process(task)
 		if (task->pid == pid)
 		{
+			struct vm_area_struct *virtual_memory;
 			virtual_memory = task->mm->mmap;
 			while(virtual_memory){
+				unsigned long page;
 
-    				for(page = (unsigned long) virtual_memory->vm_start; page < (unsigned long) virtual_memory->vm_end; page+=PAGE_SIZE)
+    				for(page =  virtual_memory->vm_start; page < virtual_memory->vm_end; page+=PAGE_SIZE)
     				{
         				walk_pte_in_memory(task->mm, page);
     				}
@@ -95,6 +101,7 @@ enum hrtimer_restart timer_callback( struct hrtimer *timer_for_restart )
 		}
 	// And also do the Kernel log printing aka printk per requirements
 	printk(KERN_INFO "PID [%d]: RSS=[%ld] KB, SWAP=[%ld] KB, WSS=[%ld] KB", pid,RSS,SWAP,WSS);
+
 	return HRTIMER_RESTART;
 }
 
